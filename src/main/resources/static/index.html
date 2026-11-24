@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Sistema de Avaliação de Disciplinas e Docentes - BD1</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<h1>Sistema de Avaliação de Disciplinas e Docentes</h1>
+<p>Natureza: Avaliação anônima de disciplinas e docentes (1 participação por aluno/disciplina/semestre).</p>
+
+<hr>
+
+<section id="secLogin">
+    <h2>Acesso ao Sistema</h2>
+    <form onsubmit="fazerLogin(event)">
+        <div>
+            <label for="loginIdentificador">E-mail ou Matrícula:</label><br>
+            <input type="text" id="loginIdentificador" size="35" required placeholder="Digite o e-mail ou matrícula">
+        </div>
+        <br>
+        <div>
+            <label for="loginSenha">Senha:</label><br>
+            <input type="password" id="loginSenha" size="20" value="1234" required>
+        </div>
+        <br>
+        <button type="submit">Entrar</button>
+    </form>
+</section>
+
+<div id="areaSistema" style="display:none;">
+    <section>
+        <strong>Usuário logado:</strong> <span id="infoUsuarioAtivo"></span>
+        &nbsp;
+        <button type="button" onclick="fazerLogout()">Sair</button>
+    </section>
+
+    <hr>
+
+    <nav>
+        <button type="button" id="btnNavQuestoes" onclick="mostrarSecao('secQuestoes')">1. Questões</button>
+        <button type="button" id="btnNavAvaliacoes" onclick="mostrarSecao('secAvaliacoes')">2. Avaliações e Destinatários</button>
+        <button type="button" id="btnNavResponder" onclick="mostrarSecao('secResponder')">3. Responder Avaliação Anônima</button>
+        <button type="button" id="btnNavRelatorios" onclick="mostrarSecao('secRelatorios')">4. Relatórios e Gráficos</button>
+    </nav>
+
+    <hr>
+
+    <section id="secQuestoes">
+        <h2>1. Cadastro de Questões</h2>
+        <form onsubmit="cadastrarQuestao(event)">
+            <div>
+                <label>Enunciado:</label><br>
+                <textarea id="qEnunciado" rows="2" cols="70" required></textarea>
+            </div>
+            <br>
+            <div>
+                <label>Tipo:</label>
+                <select id="qTipo" onchange="alternarCamposAlternativas()">
+                    <option value="MULTIPLA_ESCOLHA">Múltipla Escolha (Escala 1 a 5)</option>
+                    <option value="TEXTO_LIVRE">Texto Livre</option>
+                </select>
+                &nbsp;
+                <label>Categoria:</label>
+                <input type="text" id="qCategoria" value="Didática" required>
+            </div>
+            <br>
+            <div id="boxAlternativas">
+                <p>Alternativas (preencha texto e peso de 1 a 5):</p>
+                <div>1: <input type="text" id="altTexto1" size="45" value="1 - Discordo totalmente"> Peso: <input type="number" id="altPeso1" min="1" max="5" value="1"></div>
+                <div>2: <input type="text" id="altTexto2" size="45" value="2 - Discordo parcialmente"> Peso: <input type="number" id="altPeso2" min="1" max="5" value="2"></div>
+                <div>3: <input type="text" id="altTexto3" size="45" value="3 - Neutro"> Peso: <input type="number" id="altPeso3" min="1" max="5" value="3"></div>
+                <div>4: <input type="text" id="altTexto4" size="45" value="4 - Concordo parcialmente"> Peso: <input type="number" id="altPeso4" min="1" max="5" value="4"></div>
+                <div>5: <input type="text" id="altTexto5" size="45" value="5 - Concordo totalmente"> Peso: <input type="number" id="altPeso5" min="1" max="5" value="5"></div>
+            </div>
+            <br>
+            <button type="submit">Salvar Questão</button>
+        </form>
+
+        <h3>Questões Cadastradas</h3>
+        <table border="1" cellpadding="4">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Enunciado</th>
+                <th>Tipo</th>
+                <th>Categoria</th>
+                <th>Qtd. Alternativas</th>
+            </tr>
+            </thead>
+            <tbody id="tabelaQuestoes"></tbody>
+        </table>
+    </section>
+
+    <section id="secAvaliacoes" style="display:none;">
+        <h2>2. Cadastrar Avaliação</h2>
+        <form onsubmit="cadastrarAvaliacao(event)">
+            <div>
+                <label>Título:</label>
+                <input type="text" id="avTitulo" size="50" required placeholder="Ex: Avaliação Discente - Projeto de BD (2026/2)">
+            </div>
+            <br>
+            <div>
+                <label>Descrição:</label>
+                <input type="text" id="avDescricao" size="60">
+            </div>
+            <br>
+            <div>
+                <label>Disciplina:</label>
+                <select id="avDisciplina"></select>
+                &nbsp;
+                <label>Ano:</label>
+                <input type="number" id="avAno" value="2026" min="2020" max="2030" required>
+                &nbsp;
+                <label>Semestre:</label>
+                <select id="avSemestre">
+                    <option value="1">1</option>
+                    <option value="2" selected>2</option>
+                </select>
+            </div>
+            <br>
+            <div>
+                <label>Data:</label>
+                <input type="date" id="avData" value="2026-11-20" required>
+                &nbsp;
+                <label>Início:</label>
+                <input type="time" id="avInicio" value="08:00" required>
+                &nbsp;
+                <label>Fim:</label>
+                <input type="time" id="avFim" value="23:59" required>
+            </div>
+            <br>
+            <button type="submit">Cadastrar Avaliação</button>
+        </form>
+
+        <hr>
+
+        <h3>Montar Questões da Avaliação</h3>
+        <div>
+            <label>Avaliação:</label>
+            <select id="selAvQuestoes"></select>
+            <button type="button" onclick="salvarQuestoesAvaliacao()">Salvar Questões Selecionadas</button>
+        </div>
+        <div id="listaCheckQuestoes"></div>
+
+        <hr>
+
+        <h3>Indicar Alunos Destinatários</h3>
+        <div>
+            <label>Avaliação:</label>
+            <select id="selAvDestinatarios"></select>
+            <button type="button" onclick="salvarDestinatariosAvaliacao()">Vincular Alunos Selecionados</button>
+        </div>
+        <div id="listaCheckAlunos"></div>
+
+        <hr>
+
+        <h3>Avaliações Cadastradas</h3>
+        <table border="1" cellpadding="4">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Título</th>
+                <th>Disciplina</th>
+                <th>Docente</th>
+                <th>Período</th>
+                <th>Data</th>
+                <th>Horário</th>
+            </tr>
+            </thead>
+            <tbody id="tabelaAvaliacoes"></tbody>
+        </table>
+    </section>
+
+    <section id="secResponder" style="display:none;">
+        <h2>3. Responder Avaliação (Resposta Anônima)</h2>
+        <p><strong>Garantia de Anonimato:</strong> Ao enviar, o sistema registra apenas que você participou nesta disciplina/semestre, sem gravar seu usuário nas respostas.</p>
+
+        <div id="areaAlunoAvaliacoes">
+            <label>Selecione uma avaliação vinculada ao seu usuário:</label>
+            <select id="selAvaliacaoResponder" onchange="carregarFormularioResposta()"></select>
+            <div id="statusAvaliacaoAluno"></div>
+            <br>
+            <form id="formResponder" onsubmit="enviarRespostaAnonima(event)"></form>
+        </div>
+    </section>
+
+    <section id="secRelatorios" style="display:none;">
+        <h2>4. Relatórios Analíticos</h2>
+        <button type="button" onclick="carregarTodosRelatorios()">Atualizar Relatórios</button>
+
+        <hr>
+
+        <h3>Relatório 1: Ranking e Média por Disciplina e Docente (com Subconsulta da Média Geral)</h3>
+        <table border="1" cellpadding="4">
+            <thead>
+            <tr>
+                <th>Posição</th>
+                <th>Código</th>
+                <th>Disciplina</th>
+                <th>Docente</th>
+                <th>Período</th>
+                <th>Submissões</th>
+                <th>Média Disciplina</th>
+                <th>Média Geral</th>
+                <th>Situação</th>
+            </tr>
+            </thead>
+            <tbody id="tbodyRel1"></tbody>
+        </table>
+        <br>
+        <div style="width: 700px; max-width: 100%;">
+            <canvas id="chartRel1" height="140"></canvas>
+        </div>
+
+        <hr>
+
+        <h3>Relatório 2: Taxa de Adesão e Alunos Pendentes (Junção Externa LEFT JOIN)</h3>
+        <table border="1" cellpadding="4">
+            <thead>
+            <tr>
+                <th>Avaliação</th>
+                <th>Disciplina</th>
+                <th>Período</th>
+                <th>Convocados</th>
+                <th>Respondidos</th>
+                <th>Pendentes</th>
+                <th>Adesão (%)</th>
+            </tr>
+            </thead>
+            <tbody id="tbodyRel2"></tbody>
+        </table>
+        <br>
+        <div style="width: 700px; max-width: 100%;">
+            <canvas id="chartRel2" height="140"></canvas>
+        </div>
+        <h4>Alunos que Ainda Não Responderam (LEFT JOIN)</h4>
+        <table border="1" cellpadding="4">
+            <thead>
+            <tr>
+                <th>Avaliação</th>
+                <th>Disciplina</th>
+                <th>Matrícula</th>
+                <th>Aluno</th>
+                <th>E-mail</th>
+            </tr>
+            </thead>
+            <tbody id="tbodyRel2Pendentes"></tbody>
+        </table>
+
+        <hr>
+
+        <h3>Relatório 3: Top 10 Questões com Menor Média e Questões Não Utilizadas (LEFT JOIN + FETCH FIRST)</h3>
+        <table border="1" cellpadding="4">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Questão</th>
+                <th>Categoria</th>
+                <th>Qtd. Avaliações</th>
+                <th>Total Respostas</th>
+                <th>Nota Média</th>
+            </tr>
+            </thead>
+            <tbody id="tbodyRel3"></tbody>
+        </table>
+        <br>
+        <div style="width: 700px; max-width: 100%;">
+            <canvas id="chartRel3" height="160"></canvas>
+        </div>
+
+        <hr>
+
+        <h3>Relatório 4: Desempenho por Período com Filtros (BETWEEN, IN e LIKE)</h3>
+        <div>
+            <label>Data Início:</label>
+            <input type="date" id="fDataInicio" value="2025-01-01">
+            <label>Data Fim:</label>
+            <input type="date" id="fDataFim" value="2026-12-31">
+            <label>Semestre:</label>
+            <select id="fSemestre">
+                <option value="">Todos (1 e 2)</option>
+                <option value="1">1º Semestre</option>
+                <option value="2">2º Semestre</option>
+            </select>
+            <label>Disciplina ou Docente:</label>
+            <input type="text" id="fTermo" placeholder="Ex: Banco ou Anderson">
+            <button type="button" onclick="carregarRelatorio4()">Filtrar</button>
+        </div>
+        <br>
+        <table border="1" cellpadding="4">
+            <thead>
+            <tr>
+                <th>Data</th>
+                <th>Período</th>
+                <th>Código</th>
+                <th>Disciplina</th>
+                <th>Docente</th>
+                <th>Respostas</th>
+                <th>Nota Média</th>
+            </tr>
+            </thead>
+            <tbody id="tbodyRel4"></tbody>
+        </table>
+        <br>
+        <div style="width: 700px; max-width: 100%;">
+            <canvas id="chartRel4" height="140"></canvas>
+        </div>
+    </section>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
